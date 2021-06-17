@@ -1,6 +1,11 @@
+const uniqueTitle = title => `${title}-${Date.now()}`
+
 describe('Tasks', function () {
+  beforeEach(function () {
+    cy.visit('/')
+  })
+
   it('displays the board', function () {
-    cy.visit('http://localhost:3000')
     cy.get('h2').contains('Backlog')
     cy.get('h2').contains('In Progress')
     cy.get('h2').contains('PR Review')
@@ -9,9 +14,7 @@ describe('Tasks', function () {
   })
 
   it('creates a task', function () {
-    cy.visit('http://localhost:3000')
-
-    const title = `New Task-${Date.now()}`
+    const title = uniqueTitle('New Task')
 
     cy.contains('Add Task').click()
 
@@ -29,5 +32,28 @@ describe('Tasks', function () {
 
     cy.contains('Created task!')
     cy.get('#column-in_progress').contains(title)
+  })
+
+  it('updates and moves a task', function () {
+    // Create task
+    const title = uniqueTitle('New Task')
+    cy.contains('Add Task').click()
+    cy.get('input[name="title"]').type(title)
+    cy.get('textarea[name="description"]').type('Do the thing.')
+    cy.contains('Save').click()
+    cy.contains('Created task!')
+
+    // Update and move task
+    const newTitle = uniqueTitle('Updated Task')
+    cy.contains(title).click()
+    cy.get('input[name="title"]')
+      .clear()
+      .type(newTitle)
+    cy.get('#mui-component-select-status').click()
+    cy.contains('PR Review').click()
+    cy.contains('Save').click()
+    cy.contains('Updated task!')
+    cy.get('#column-pr_review').contains(newTitle)
+    cy.contains(title).should('not.exist')
   })
 })
